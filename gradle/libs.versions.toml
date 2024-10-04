@@ -1,0 +1,30 @@
+[versions]
+# The latest versions are available at https://fabricmc.net/develop
+minecraft = "1.21.1"
+#quilt_mappings = "1.21+build.18"
+fabric_loader = "0.16.5"
+fabric_api = "0.105.0+1.21.1"
+fabric_language_kotlin = "1.12.2+kotlin.2.0.20"
+sodium_version = "mc1.21-0.6.0-beta.2-fabric"
+mod_menu_version = "11.0.2"
+joml_version = "1.10.5"
+
+[libraries]
+minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
+#quilt_mappings = { module = "org.quiltmc:quilt-mappings", version.ref = "quilt_mappings" }
+fabric_loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabric_loader" }
+fabric-api = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fabric_api" }
+fabric_language_kotlin = { module = "net.fabricmc:fabric-language-kotlin", version.ref = "fabric_language_kotlin" }
+sodium = { module = "maven.modrinth:sodium", version.ref = "sodium_version" }
+joml = { module = "org.joml:joml", version.ref = "joml_version" }
+mod_menu = { module = "com.terraformersmc:modmenu", version.ref = "mod_menu_version" }
+
+# If you have multiple similar dependencies, you can declare a dependency bundle and reference it on the build script with "libs.bundles.example".
+[bundles]
+dev_mods = [ "joml", "sodium" ]
+dependencies = [ "mod_menu" ]
+
+[plugins]
+grgit = { id = "org.ajoberstar.grgit", version = "5.2.2"}
+fabric_loom = { id = "fabric-loom", version = "1.7-SNAPSHOT" }
+

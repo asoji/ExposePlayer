@@ -1,0 +1,45 @@
+{
+	"schemaVersion": 1,
+	"id": "template",
+	"version": "${version}",
+	"name": "Template mod",
+	"description": "This is an example description! Tell everyone what your mod is about!",
+	"authors": [
+		"devOS: Sanity Edition",
+		"Team Nautical"
+	],
+	"contributors": [
+		"Put your GitHub username here!"
+	],
+	"contact": {
+		"homepage": "https://devos.one/",
+		"sources": "https://github.com/devOS-Sanity-Edition/fabric-nautical-template-kt"
+	},
+	"license": "MIT",
+	"icon": "assets/template/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			{
+				"adapter": "kotlin",
+				"value": "one.devos.nautical.template.TemplateMod"
+			}
+		],
+		"client": [
+			{
+				"adapter": "kotlin",
+				"value": "one.devos.nautical.template.client.TemplateModClient"
+			}
+		]
+	},
+	"mixins": [
+		"template.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.5",
+		"minecraft": "1.21.1",
+		"java": ">=21",
+		"fabric-api": "*",
+		"fabric-language-kotlin": "*"
+	}
+}

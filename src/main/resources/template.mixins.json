@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "one.devos.nautical.template.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+  ],
+  "client": [
+    "ExampleMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+	}
+}
