@@ -22,7 +22,7 @@ joml = { module = "org.joml:joml", version.ref = "joml_version" }
 mod_menu = { module = "com.terraformersmc:modmenu", version.ref = "mod_menu_version" }
 ktor-server-content-negotiation-jvm = { module = "io.ktor:ktor-server-content-negotiation-jvm", version.ref = "ktor" }
 ktor-server-core-jvm = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
-ktor-serialization-kotlinx-json-jvm = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
+ktor-serialization-gson-jvm = { module = "io.ktor:ktor-serialization-gson-jvm", version.ref = "ktor" }
 ktor-server-netty-jvm = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
 
 # If you have multiple similar dependencies, you can declare a dependency bundle and reference it on the build script with "libs.bundles.example".
@@ -32,7 +32,7 @@ dependencies = [ "mod_menu" ]
 ktor = [
     "ktor-server-content-negotiation-jvm",
     "ktor-server-core-jvm",
-    "ktor-serialization-kotlinx-json-jvm",
+    "ktor-serialization-gson-jvm",
     "ktor-server-netty-jvm"
 ]
 

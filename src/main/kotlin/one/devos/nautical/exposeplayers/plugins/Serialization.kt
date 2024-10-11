@@ -8,7 +8,7 @@ import io.ktor.util.reflect.*
 
 fun Application.configureSerialization() {
     install(ContentNegotiation) {
-        json()
+        gson { }
     }
 
 //    routing {
