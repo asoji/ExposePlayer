@@ -12,8 +12,6 @@ import java.util.UUID;
 public interface PlayerListMixin {
 
     @Accessor("stats")
-    default Map<UUID, ServerStatsCounter> getStats() {
-        throw new UnsupportedOperationException();
-    }
+    Map<UUID, ServerStatsCounter> getStats();
 
 }

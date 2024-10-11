@@ -55,7 +55,7 @@ fun Application.configureRouting(server: MinecraftServer) {
                 return@get
             }
 
-            val statList = mutableListOf<PlayerStatistic>()
+            val statList = mutableListOf<PlayerStatistic<*>>()
 
             val statsCounter = server.playerList.getPlayerStatsByUuid(playerUuid, playerName)
 
@@ -110,22 +110,22 @@ private data class PlayersEndpointResponse(
 )
 
 @Serializable
-private sealed interface PlayerStatistic {
+private sealed interface PlayerStatistic<T> {
     val displayName: String
-    @Contextual val value: Any
+    @Contextual val value: T
 }
 
 @Serializable
 private class PlayerCustomStatistic(
     override val displayName: String,
-    @Contextual override val value: Any
-) : PlayerStatistic
+    override val value: Int
+) : PlayerStatistic<Int>
 
 @Serializable
 private class PlayerItemsStatistic(
     override val displayName: String,
-    @Contextual override val value: Map<ItemStatisticType, Int>,
-) : PlayerStatistic
+    override val value: Map<ItemStatisticType, Int>,
+) : PlayerStatistic<Map<ItemStatisticType, Int>>
 
 @Serializable
 private enum class ItemStatisticType(private val value: StatType<*>) {
@@ -146,7 +146,7 @@ private enum class ItemStatisticType(private val value: StatType<*>) {
 private class PlayerBlocksStatistic(
     override val displayName: String,
     @Contextual override val value: Map<BlockStatisticType, Int>,
-) : PlayerStatistic
+) : PlayerStatistic<Map<BlockStatisticType, Int>>
 
 @Serializable
 private enum class BlockStatisticType(private val value: StatType<*>) {
