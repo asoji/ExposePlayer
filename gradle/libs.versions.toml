@@ -8,23 +8,36 @@ fabric_language_kotlin = "1.12.2+kotlin.2.0.20"
 sodium_version = "mc1.21-0.6.0-beta.2-fabric"
 mod_menu_version = "11.0.2"
 joml_version = "1.10.5"
+ktor = "3.0.0"
+
 
 [libraries]
 minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
 #quilt_mappings = { module = "org.quiltmc:quilt-mappings", version.ref = "quilt_mappings" }
-fabric_loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabric_loader" }
+fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabric_loader" }
 fabric-api = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fabric_api" }
-fabric_language_kotlin = { module = "net.fabricmc:fabric-language-kotlin", version.ref = "fabric_language_kotlin" }
+fabric-language-kotlin = { module = "net.fabricmc:fabric-language-kotlin", version.ref = "fabric_language_kotlin" }
 sodium = { module = "maven.modrinth:sodium", version.ref = "sodium_version" }
 joml = { module = "org.joml:joml", version.ref = "joml_version" }
 mod_menu = { module = "com.terraformersmc:modmenu", version.ref = "mod_menu_version" }
+ktor-server-content-negotiation-jvm = { module = "io.ktor:ktor-server-content-negotiation-jvm", version.ref = "ktor" }
+ktor-server-core-jvm = { module = "io.ktor:ktor-server-core-jvm", version.ref = "ktor" }
+ktor-serialization-kotlinx-json-jvm = { module = "io.ktor:ktor-serialization-kotlinx-json-jvm", version.ref = "ktor" }
+ktor-server-netty-jvm = { module = "io.ktor:ktor-server-netty-jvm", version.ref = "ktor" }
 
 # If you have multiple similar dependencies, you can declare a dependency bundle and reference it on the build script with "libs.bundles.example".
 [bundles]
 dev_mods = [ "joml", "sodium" ]
 dependencies = [ "mod_menu" ]
+ktor = [
+    "ktor-server-content-negotiation-jvm",
+    "ktor-server-core-jvm",
+    "ktor-serialization-kotlinx-json-jvm",
+    "ktor-server-netty-jvm"
+]
 
 [plugins]
 grgit = { id = "org.ajoberstar.grgit", version = "5.2.2"}
 fabric_loom = { id = "fabric-loom", version = "1.7-SNAPSHOT" }
-
+ktor = { id = "io.ktor.plugin", version = "3.0.0" }
+kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.0.21" }

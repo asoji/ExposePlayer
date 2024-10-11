@@ -1,19 +1,19 @@
 {
 	"schemaVersion": 1,
-	"id": "template",
+	"id": "exposeplayers",
 	"version": "${version}",
-	"name": "Template mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "ExposePlayers",
+	"description": "A web server mod that exposes basic player stats",
 	"authors": [
 		"devOS: Sanity Edition",
 		"Team Nautical"
 	],
 	"contributors": [
-		"Put your GitHub username here!"
+		"asojidev"
 	],
 	"contact": {
 		"homepage": "https://devos.one/",
-		"sources": "https://github.com/devOS-Sanity-Edition/fabric-nautical-template-kt"
+		"sources": "https://github.com/devOS-Sanity-Edition/ExposePlayers"
 	},
 	"license": "MIT",
 	"icon": "assets/template/icon.png",
@@ -22,18 +22,12 @@
 		"main": [
 			{
 				"adapter": "kotlin",
-				"value": "one.devos.nautical.template.TemplateMod"
-			}
-		],
-		"client": [
-			{
-				"adapter": "kotlin",
-				"value": "one.devos.nautical.template.client.TemplateModClient"
+				"value": "one.devos.nautical.exposeplayers.ExposePlayers"
 			}
 		]
 	},
 	"mixins": [
-		"template.mixins.json"
+		"exposeplayers.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.16.5",

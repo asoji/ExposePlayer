@@ -1,11 +1,9 @@
 {
   "required": true,
-  "package": "one.devos.nautical.template.mixin",
+  "package": "one.devos.nautical.exposeplayers.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-  ],
-  "client": [
-    "ExampleMixin"
+    "PlayerListMixin"
   ],
   "injectors": {
     "defaultRequire": 1

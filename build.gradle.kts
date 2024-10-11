@@ -1,10 +1,12 @@
 plugins {
-	kotlin("jvm") version "2.0.20"
+	kotlin("jvm") version "2.0.21"
 	`maven-publish`
 	java
 
 	alias(libs.plugins.grgit)
 	alias(libs.plugins.fabric.loom)
+	alias(libs.plugins.ktor)
+	alias(libs.plugins.kotlinx.serialization)
 }
 
 val archivesBaseName = "${project.property("archives_base_name").toString()}+mc${libs.versions.minecraft.get()}"
@@ -12,6 +14,7 @@ version = getModVersion()
 group = project.property("maven_group")!!
 
 repositories {
+	mavenCentral()
 	maven("https://api.modrinth.com/maven")
 	maven("https://maven.terraformersmc.com/")
 	maven("https://maven.parchmentmc.org")
@@ -40,6 +43,8 @@ dependencies {
 	modLocalRuntime(libs.bundles.dev.mods)
 
 	include(modImplementation("gay.asoji:fmw:1.0.0+build.8")!!) // just to avoid the basic long metadata calls
+
+	implementation(libs.bundles.ktor)
 }
 
 // Write the version to the fabric.mod.json
@@ -103,6 +108,13 @@ publishing {
 //			}
 //		}
 //	}
+}
+
+application {
+	mainClass.set("one.devos.nautical.exposeplayers.ExposePlayersKt")
+
+	val isDevelopment: Boolean = project.ext.has("development")
+	applicationDefaultJvmArgs = listOf("-Dio.ktor.development=$isDevelopment")
 }
 
 fun getModVersion(): String {
