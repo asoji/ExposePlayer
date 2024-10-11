@@ -1,14 +1,14 @@
 package one.devos.nautical.exposeplayers.plugins
 
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.serialization.gson.*
 import io.ktor.server.application.*
 import io.ktor.server.plugins.contentnegotiation.*
-import io.ktor.server.routing.*
-import io.ktor.util.reflect.*
 
 fun Application.configureSerialization() {
     install(ContentNegotiation) {
-        gson { }
+        gson {
+            setPrettyPrinting()
+        }
     }
 
 //    routing {
