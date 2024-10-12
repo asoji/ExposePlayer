@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component
 import net.minecraft.server.MinecraftServer
 import net.minecraft.stats.StatType
 import net.minecraft.stats.Stats
+import net.minecraft.world.item.Item
 import one.devos.nautical.exposeplayers.mixin.PlayerAdvancementsMixin
 import one.devos.nautical.exposeplayers.utils.UUIDSerializer
 import one.devos.nautical.exposeplayers.utils.getPlayerStatsByUuid
@@ -35,7 +36,7 @@ fun Application.configureRouting(server: MinecraftServer) {
         }
 
         get("/players") {
-            call.respond(PlayersEndpointResponse(
+            call.respond(Players(
                 server.playerCount,
                 server.playerList.players.map { player ->
                     PlayerInfo(player.uuid, player.name.string)
@@ -43,7 +44,7 @@ fun Application.configureRouting(server: MinecraftServer) {
             ))
         }
 
-        get("/player/health/{player_name}") {
+        get("/player/status/{player_name}") {
             val playerName = call.parameters["player_name"]
             if (playerName == null) {
                 call.respond(HttpStatusCode.BadRequest)
@@ -62,18 +63,30 @@ fun Application.configureRouting(server: MinecraftServer) {
                 return@get
             }
 
-            call.respond(PlayerHealth(
-                player.health,
-                player.foodData.saturationLevel,
-                player.foodData.foodLevel,
-                player.foodData.exhaustionLevel,
-                player.airSupply,
-                player.armorValue,
-                player.armorCoverPercentage,
-                player.maxHealth,
-                player.maxAirSupply,
-                20F, // bad assumption, external API might be needed, we'll get there when we get there i guess.
-                player.maxAbsorption,
+            call.respond(PlayerStatus(
+                PlayerHealth(
+                    player.health,
+                    player.maxHealth
+                ),
+                PlayerAbsorption(
+                    player.absorptionAmount,
+                    player.maxAbsorption
+                ),
+                PlayerArmor(
+                    player.armorValue,
+                    player.armorCoverPercentage,
+                    20f, // assuming max armor value is 20 temporarily - Other mods may modify the max value, thus meaning that we need to find a way to obtain their new max value.
+                    player.absorptionAmount
+                ),
+                PlayerFood(
+                    player.foodData.exhaustionLevel,
+                    player.foodData.saturationLevel,
+                    player.foodData.foodLevel
+                ),
+                PlayerAir(
+                    player.airSupply,
+                    player.maxAirSupply
+                )
             ))
         }
 
@@ -91,6 +104,7 @@ fun Application.configureRouting(server: MinecraftServer) {
             }
 
             val statList = mutableListOf<PlayerStatistic<*>>()
+            val itemStats = mutableMapOf<Item, PlayerItemsStatistic>()
 
             val statsCounter = server.playerList.getPlayerStatsByUuid(playerUuid, playerName)
 
@@ -111,22 +125,43 @@ fun Application.configureRouting(server: MinecraftServer) {
                     }
                 }
 
-                statList.add(PlayerItemsStatistic(Component.translatable(item.descriptionId).string, types))
+                val new = PlayerItemsStatistic(Component.translatable(item.descriptionId).string, types)
+                itemStats.compute(item) { _, existing ->
+                    if (existing == null) {
+                        new
+                    } else {
+                        PlayerItemsStatistic(
+                            new.displayName,
+                            existing.value.apply { putAll(new.value) }
+                        )
+                    }
+                }
             }
 
             for (block in BuiltInRegistries.BLOCK) {
-                val types = mutableMapOf<BlockStatisticType, Int>()
+                val types = mutableMapOf<ItemStatisticType, Int>()
 
                 for (statisticType in BLOCK_STATS) {
                     val value = statsCounter.getValue(statisticType.get(block))
                     if (value != 0) {
-                        types[BlockStatisticType.from(statisticType)] = value
+                        types[ItemStatisticType.from(statisticType)] = value
                     }
                 }
 
-                statList.add(PlayerBlocksStatistic(Component.translatable(block.descriptionId).string, types))
+                val new = PlayerItemsStatistic(Component.translatable(block.descriptionId).string, types)
+                itemStats.compute(block.asItem()) { _, existing ->
+                    if (existing == null) {
+                        new
+                    } else {
+                        PlayerItemsStatistic(
+                            new.displayName,
+                            existing.value.apply { putAll(new.value) }
+                        )
+                    }
+                }
             }
 
+            statList.addAll(itemStats.values)
             call.respond(statList)
         }
 
@@ -149,14 +184,21 @@ fun Application.configureRouting(server: MinecraftServer) {
                 return@get
             }
 
-            val completedAdvancements = server.advancements.allAdvancements.mapNotNull {
-                (player.advancements as PlayerAdvancementsMixin).progress.get(it) ?: return@mapNotNull null
-            }.filter { it.isDone }
+            val completedAdvancements = server.advancements.allAdvancements.mapNotNull { advancement ->
+                val progress = (player.advancements as PlayerAdvancementsMixin).progress[advancement] ?: return@mapNotNull null
+                Component.translatable(advancement.id.toLanguageKey()).string to progress.isDone
+            }
 
-
+            call.respond(completedAdvancements.toMap())
         }
     }
 }
+
+@Serializable
+private data class Players(
+    val count: Int,
+    val players: List<@Contextual PlayerInfo>
+)
 
 @Serializable
 private data class PlayerInfo(
@@ -165,24 +207,45 @@ private data class PlayerInfo(
 )
 
 @Serializable
-private data class PlayerHealth( // todo: vehicle casting
-    val health: Float,
-    val saturation: Float,
-    val hunger: Int,
-    val exhaustion: Float,
-    val airSupply: Int,
-    val armor: Int,
-    val armorPercentage: Float,
-    val maxHealth: Float,
-    val maxAirSupply: Int,
-    val maxArmor: Float,
-    val maxAbsorption: Float,
+private data class PlayerHealth(
+    val current: Float,
+    val max: Float,
 )
 
 @Serializable
-private data class PlayersEndpointResponse(
-    val count: Int,
-    val players: List<@Contextual PlayerInfo>
+private data class PlayerAbsorption(
+    val current: Float,
+    val max: Float,
+)
+
+@Serializable
+private data class PlayerFood(
+    val exhaustion: Float,
+    val saturation: Float,
+    val level: Int,
+)
+
+@Serializable
+private data class PlayerAir(
+    val current: Int,
+    val max: Int,
+)
+
+@Serializable
+private data class PlayerArmor(
+    val value: Int,
+    val percentage: Float,
+    val max: Float,
+    val absorption: Float,
+)
+
+@Serializable
+private data class PlayerStatus( // todo: vehicle data
+    val health: PlayerHealth,
+    val absorption: PlayerAbsorption,
+    val armor: PlayerArmor,
+    val food: PlayerFood,
+    val air: PlayerAir,
 )
 
 @Serializable
@@ -200,8 +263,8 @@ private class PlayerCustomStatistic(
 @Serializable
 private class PlayerItemsStatistic(
     override val displayName: String,
-    override val value: Map<ItemStatisticType, Int>,
-) : PlayerStatistic<Map<ItemStatisticType, Int>>
+    override val value: MutableMap<ItemStatisticType, Int>,
+) : PlayerStatistic<MutableMap<ItemStatisticType, Int>>
 
 @Serializable
 private enum class ItemStatisticType(private val value: StatType<*>) {
@@ -209,7 +272,8 @@ private enum class ItemStatisticType(private val value: StatType<*>) {
     BROKEN(Stats.ITEM_BROKEN),
     CRAFTED(Stats.ITEM_CRAFTED),
     PICKED_UP(Stats.ITEM_PICKED_UP),
-    DROPPED(Stats.ITEM_DROPPED);
+    DROPPED(Stats.ITEM_DROPPED),
+    MINED(Stats.BLOCK_MINED);
 
     companion object {
         fun from(statisticType: StatType<*>): ItemStatisticType {
@@ -217,25 +281,3 @@ private enum class ItemStatisticType(private val value: StatType<*>) {
         }
     }
 }
-
-@Serializable
-private class PlayerBlocksStatistic(
-    override val displayName: String,
-    @Contextual override val value: Map<BlockStatisticType, Int>,
-) : PlayerStatistic<Map<BlockStatisticType, Int>>
-
-@Serializable
-private enum class BlockStatisticType(private val value: StatType<*>) {
-    MINED(Stats.BLOCK_MINED);
-
-    companion object {
-        fun from(statisticType: StatType<*>): BlockStatisticType {
-            return entries.first { it.value == statisticType }
-        }
-    }
-}
-
-@Serializable
-private class CompletedAdvancements(
-    val id:
-)
