@@ -1,0 +1,166 @@
+openapi: "3.1.0"
+info:
+  title: "ExposePlayers API"
+  description: "ExposePlayers API"
+  version: "1.0.0"
+servers:
+- url: "https://ExposePlayers"
+paths:
+  /:
+    get:
+      description: ""
+      responses:
+        "200":
+          description: "OK"
+          content:
+            text/plain:
+              schema:
+                type: "string"
+              examples:
+                Example#1:
+                  value: "Hello world!"
+  /player/health/{player_name}:
+    get:
+      description: ""
+      parameters:
+      - name: "player_name"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PlayerHealth"
+              examples:
+                Example#1:
+                  description: ""
+                  value:
+                    health: "null"
+                    saturation: "null"
+                    hunger: "null"
+                    exhaustion: "null"
+                    airSupply: "null"
+                    armor: "null"
+                    armorPercentage: "null"
+                    maxHealth: "null"
+                    maxAirSupply: "null"
+                    maxArmor: 20.0
+                    maxAbsorption: "null"
+  /player/stats/{player_name}:
+    get:
+      description: ""
+      parameters:
+      - name: "player_name"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                type: "array"
+                items:
+                  $ref: "#/components/schemas/PlayerStatistic"
+              examples:
+                Example#1:
+                  description: ""
+                  value: []
+  /players:
+    get:
+      description: ""
+      responses:
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PlayersEndpointResponse"
+components:
+  schemas:
+    PlayerHealth:
+      type: "object"
+      properties:
+        health:
+          type: "number"
+          format: "float"
+        saturation:
+          type: "number"
+          format: "float"
+        hunger:
+          type: "integer"
+          format: "int32"
+        exhaustion:
+          type: "number"
+          format: "float"
+        airSupply:
+          type: "integer"
+          format: "int32"
+        armor:
+          type: "integer"
+          format: "int32"
+        armorPercentage:
+          type: "number"
+          format: "float"
+        maxHealth:
+          type: "number"
+          format: "float"
+        maxAirSupply:
+          type: "integer"
+          format: "int32"
+        maxArmor:
+          type: "number"
+          format: "float"
+        maxAbsorption:
+          type: "number"
+          format: "float"
+    PlayerStatistic:
+      type: "object"
+      properties: {}
+    PlayerInfo:
+      type: "object"
+      properties:
+        uuid:
+          type: "string"
+          format: "uuid"
+        name:
+          type: "string"
+      required:
+      - "uuid"
+      - "name"
+    PlayersEndpointResponse:
+      type: "object"
+      properties:
+        count:
+          type: "integer"
+          format: "int32"
+        players:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/PlayerInfo"
+      required:
+      - "players"

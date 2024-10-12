@@ -11,6 +11,7 @@ import net.minecraft.network.chat.Component
 import net.minecraft.server.MinecraftServer
 import net.minecraft.stats.StatType
 import net.minecraft.stats.Stats
+import one.devos.nautical.exposeplayers.mixin.PlayerAdvancementsMixin
 import one.devos.nautical.exposeplayers.utils.UUIDSerializer
 import one.devos.nautical.exposeplayers.utils.getPlayerStatsByUuid
 import java.util.UUID
@@ -24,13 +25,13 @@ private val ITEM_STATS = listOf(
 )
 
 private val BLOCK_STATS = listOf(
-    Stats.BLOCK_MINED,
+    Stats.BLOCK_MINED
 )
 
 fun Application.configureRouting(server: MinecraftServer) {
     routing {
         get {
-            call.respondText("Hello world!")
+            call.respondText("Howdy! If you somehow got here, that's because ExposePlayers is installed and is getting stats of every player on the server to be used. Nothing malicious, just letting you know! c:")
         }
 
         get("/players") {
@@ -42,7 +43,41 @@ fun Application.configureRouting(server: MinecraftServer) {
             ))
         }
 
-        get("/players/stats/{player_name}") {
+        get("/player/health/{player_name}") {
+            val playerName = call.parameters["player_name"]
+            if (playerName == null) {
+                call.respond(HttpStatusCode.BadRequest)
+                return@get
+            }
+
+            val playerUuid = server.profileCache?.get(playerName)?.get()?.id
+            if (playerUuid == null) {
+                call.respond(HttpStatusCode.BadRequest)
+                return@get
+            }
+
+            val player = server.playerList.getPlayer(playerUuid)
+            if (player == null) {
+                call.respond(HttpStatusCode.NotFound)
+                return@get
+            }
+
+            call.respond(PlayerHealth(
+                player.health,
+                player.foodData.saturationLevel,
+                player.foodData.foodLevel,
+                player.foodData.exhaustionLevel,
+                player.airSupply,
+                player.armorValue,
+                player.armorCoverPercentage,
+                player.maxHealth,
+                player.maxAirSupply,
+                20F, // bad assumption, external API might be needed, we'll get there when we get there i guess.
+                player.maxAbsorption,
+            ))
+        }
+
+        get("/player/stats/{player_name}") {
             val playerName = call.parameters["player_name"]
             if (playerName == null) {
                 call.respond(HttpStatusCode.BadRequest)
@@ -94,6 +129,32 @@ fun Application.configureRouting(server: MinecraftServer) {
 
             call.respond(statList)
         }
+
+        get("/player/advancements") {
+            val playerName = call.parameters["player_name"]
+            if (playerName == null) {
+                call.respond(HttpStatusCode.BadRequest)
+                return@get
+            }
+
+            val playerUuid = server.profileCache?.get(playerName)?.get()?.id
+            if (playerUuid == null) {
+                call.respond(HttpStatusCode.BadRequest)
+                return@get
+            }
+
+            val player = server.playerList.getPlayer(playerUuid)
+            if (player == null) {
+                call.respond(HttpStatusCode.NotFound)
+                return@get
+            }
+
+            val completedAdvancements = server.advancements.allAdvancements.mapNotNull {
+                (player.advancements as PlayerAdvancementsMixin).progress.get(it) ?: return@mapNotNull null
+            }.filter { it.isDone }
+
+
+        }
     }
 }
 
@@ -101,6 +162,21 @@ fun Application.configureRouting(server: MinecraftServer) {
 private data class PlayerInfo(
     @Serializable(with = UUIDSerializer::class) val uuid: UUID,
     val name: String
+)
+
+@Serializable
+private data class PlayerHealth( // todo: vehicle casting
+    val health: Float,
+    val saturation: Float,
+    val hunger: Int,
+    val exhaustion: Float,
+    val airSupply: Int,
+    val armor: Int,
+    val armorPercentage: Float,
+    val maxHealth: Float,
+    val maxAirSupply: Int,
+    val maxArmor: Float,
+    val maxAbsorption: Float,
 )
 
 @Serializable
@@ -158,3 +234,8 @@ private enum class BlockStatisticType(private val value: StatType<*>) {
         }
     }
 }
+
+@Serializable
+private class CompletedAdvancements(
+    val id:
+)
