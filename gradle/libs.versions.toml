@@ -41,3 +41,4 @@ grgit = { id = "org.ajoberstar.grgit", version = "5.2.2"}
 fabric_loom = { id = "fabric-loom", version = "1.7-SNAPSHOT" }
 ktor = { id = "io.ktor.plugin", version = "3.0.0" }
 kotlinx-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.0.21" }
+shadow = { id = "com.gradleup.shadow", version = "8.3.0" }

@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
 	kotlin("jvm") version "2.0.21"
 	`maven-publish`
@@ -7,11 +9,79 @@ plugins {
 	alias(libs.plugins.fabric.loom)
 	alias(libs.plugins.ktor)
 	alias(libs.plugins.kotlinx.serialization)
+	alias(libs.plugins.shadow) apply false
 }
 
+val shade: Configuration by configurations.creating { }
 val archivesBaseName = "${project.property("archives_base_name").toString()}+mc${libs.versions.minecraft.get()}"
 version = getModVersion()
 group = project.property("maven_group")!!
+
+/*
+*
+* Taken from Deftu's Gradle-Toolkit with permission, and have explicit permission from Deftu himself to be excluded from Deftu's Gradle-Toolkit's LGPLv3 license
+*
+* src: https://github.com/Deftu/Gradle-Toolkit/blob/main/src/main/kotlin/dev/deftu/gradle/tools/shadow.gradle.kts
+*
+* lines affected: 15, 30-82
+*
+*/
+
+val fatJar = tasks.register<ShadowJar>("fatJar") {
+	group = "exposeplayers"
+	description = "Builds a fat JAR with all dependencies shaded in"
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+	configurations = listOf(shade)
+	archiveVersion.set(project.version.toString())
+	archiveClassifier.set("all")
+
+	val javaPlugin = project.extensions.getByType(JavaPluginExtension::class.java)
+	val jarTask = project.tasks.getByName("jar") as Jar
+
+	manifest.inheritFrom(jarTask.manifest)
+	val libsProvider = project.provider { listOf(jarTask.manifest.attributes["Class-Path"]) }
+	val files = project.objects.fileCollection().from(shade)
+	doFirst {
+		if (!files.isEmpty) {
+			val libs = libsProvider.get().toMutableList()
+			libs.addAll(files.map { it.name })
+			manifest.attributes(mapOf("Class-Path" to libs.filterNotNull().joinToString(" ")))
+		}
+	}
+
+	from(javaPlugin.sourceSets.getByName("main").output)
+	exclude("META-INF/INDEX.LIST", "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA", "module-info.class")
+}
+
+project.artifacts.add("shade", fatJar)
+
+pluginManager.withPlugin("java") {
+	tasks["assemble"].dependsOn(fatJar)
+}
+
+tasks {
+	val shadowJar = findByName("shadowJar")
+	if (shadowJar != null) {
+		named("shadowJar") {
+			doFirst {
+				throw GradleException("Incorrect task! You're looking for fatJar.")
+			}
+		}
+	}
+}
+
+loom {
+	tasks {
+		fatJar {
+			archiveClassifier.set("dev")
+		}
+
+		remapJar {
+			inputFile.set(fatJar.get().archiveFile)
+			archiveClassifier.set("")
+		}
+	}
+}
 
 repositories {
 	mavenCentral()
@@ -45,6 +115,7 @@ dependencies {
 	include(modImplementation("gay.asoji:fmw:1.0.0+build.8")!!) // just to avoid the basic long metadata calls
 
 	implementation(libs.bundles.ktor)
+	shade(libs.bundles.ktor)
 }
 
 // Write the version to the fabric.mod.json
