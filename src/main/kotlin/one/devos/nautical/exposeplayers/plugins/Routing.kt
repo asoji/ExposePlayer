@@ -44,7 +44,7 @@ fun Application.configureRouting(server: MinecraftServer) {
             ))
         }
 
-        get("/player/status/{player_name}") {
+        get("/player/{player_name}/status") {
             val playerName = call.parameters["player_name"]
             if (playerName == null) {
                 call.respond(HttpStatusCode.BadRequest)
@@ -90,7 +90,7 @@ fun Application.configureRouting(server: MinecraftServer) {
             ))
         }
 
-        get("/player/stats/{player_name}") {
+        get("/player/{player_name}/stats") {
             val playerName = call.parameters["player_name"]
             if (playerName == null) {
                 call.respond(HttpStatusCode.BadRequest)
@@ -165,7 +165,7 @@ fun Application.configureRouting(server: MinecraftServer) {
             call.respond(statList)
         }
 
-        get("/player/advancements") {
+        get("/player/{player_name}/advancements") {
             val playerName = call.parameters["player_name"]
             if (playerName == null) {
                 call.respond(HttpStatusCode.BadRequest)
@@ -185,6 +185,7 @@ fun Application.configureRouting(server: MinecraftServer) {
             }
 
             val completedAdvancements = server.advancements.allAdvancements.mapNotNull { advancement ->
+                if (advancement.id.path.startsWith("recipes/")) return@mapNotNull null
                 val progress = (player.advancements as PlayerAdvancementsMixin).progress[advancement] ?: return@mapNotNull null
                 Component.translatable(advancement.id.toLanguageKey()).string to progress.isDone
             }
