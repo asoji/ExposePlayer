@@ -1,4 +1,4 @@
-package one.devos.nautical.exposeplayers.plugins
+package one.devos.nautical.exposer.plugins
 
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -12,9 +12,9 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.stats.StatType
 import net.minecraft.stats.Stats
 import net.minecraft.world.item.Item
-import one.devos.nautical.exposeplayers.mixin.PlayerAdvancementsMixin
-import one.devos.nautical.exposeplayers.utils.UUIDSerializer
-import one.devos.nautical.exposeplayers.utils.getPlayerStatsByUuid
+import one.devos.nautical.exposer.mixin.PlayerAdvancementsMixin
+import one.devos.nautical.exposer.utils.UUIDSerializer
+import one.devos.nautical.exposer.utils.getPlayerStatsByUuid
 import java.util.UUID
 
 private val ITEM_STATS = listOf(
@@ -32,7 +32,11 @@ private val BLOCK_STATS = listOf(
 fun Application.configureRouting(server: MinecraftServer) {
     routing {
         get {
-            call.respondText("Howdy! If you somehow got here, that's because ExposePlayers is installed and is getting stats of every player on the server to be used. Nothing malicious, just letting you know! c:")
+            call.respondText("Howdy! If you somehow got here, that's because Exposer is installed and is getting stats of every player on the server to be used. Nothing malicious, just letting you know! c:")
+        }
+
+        get("/server") {
+
         }
 
         get("/players") {

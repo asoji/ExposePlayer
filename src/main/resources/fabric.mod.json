@@ -1,19 +1,21 @@
 {
 	"schemaVersion": 1,
-	"id": "exposeplayers",
+	"id": "exposer",
 	"version": "${version}",
-	"name": "ExposePlayers",
+	"name": "Exposer",
 	"description": "A web server mod that exposes basic player stats",
 	"authors": [
 		"devOS: Sanity Edition",
 		"Team Nautical"
 	],
 	"contributors": [
-		"asojidev"
+		"asojidev",
+		"Deftu",
+		"BluSpring"
 	],
 	"contact": {
 		"homepage": "https://devos.one/",
-		"sources": "https://github.com/devOS-Sanity-Edition/ExposePlayers"
+		"sources": "https://github.com/devOS-Sanity-Edition/Exposer"
 	},
 	"license": "MIT",
 	"icon": "assets/template/icon.png",
@@ -22,12 +24,12 @@
 		"main": [
 			{
 				"adapter": "kotlin",
-				"value": "one.devos.nautical.exposeplayers.ExposePlayers"
+				"value": "Exposer"
 			}
 		]
 	},
 	"mixins": [
-		"exposeplayers.mixins.json"
+		"exposer.mixins.json"
 	],
 	"depends": {
 		"fabricloader": ">=0.16.5",

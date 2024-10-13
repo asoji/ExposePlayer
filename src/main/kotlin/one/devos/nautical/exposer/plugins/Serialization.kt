@@ -1,4 +1,4 @@
-package one.devos.nautical.exposeplayers.plugins
+package one.devos.nautical.exposer.plugins
 
 import io.ktor.serialization.gson.*
 import io.ktor.server.application.*

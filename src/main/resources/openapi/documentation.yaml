@@ -18,8 +18,10 @@ paths:
                 type: "string"
               examples:
                 Example#1:
-                  value: "Hello world!"
-  /player/health/{player_name}:
+                  value: "Howdy! If you somehow got here, that's because Exposer is\
+                    \ installed and is getting stats of every player on the server\
+                    \ to be used. Nothing malicious, just letting you know! c:"
+  /player/{player_name}/advancements:
     get:
       description: ""
       parameters:
@@ -46,23 +48,8 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/PlayerHealth"
-              examples:
-                Example#1:
-                  description: ""
-                  value:
-                    health: "null"
-                    saturation: "null"
-                    hunger: "null"
-                    exhaustion: "null"
-                    airSupply: "null"
-                    armor: "null"
-                    armorPercentage: "null"
-                    maxHealth: "null"
-                    maxAirSupply: "null"
-                    maxArmor: 20.0
-                    maxAbsorption: "null"
-  /player/stats/{player_name}:
+                $ref: "#/components/schemas/Map_String"
+  /player/{player_name}/stats:
     get:
       description: ""
       parameters:
@@ -90,6 +77,47 @@ paths:
                 Example#1:
                   description: ""
                   value: []
+  /player/{player_name}/status:
+    get:
+      description: ""
+      parameters:
+      - name: "player_name"
+        in: "path"
+        required: true
+        schema:
+          type: "string"
+      responses:
+        "400":
+          description: "Bad Request"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "404":
+          description: "Not Found"
+          content:
+            '*/*':
+              schema:
+                type: "object"
+        "200":
+          description: "OK"
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PlayerStatus"
+              examples:
+                Example#1:
+                  description: ""
+                  value:
+                    health: "null"
+                    absorption: "null"
+                    armor:
+                      value: "null"
+                      percentage: "null"
+                      max: 20.0
+                      absorption: "null"
+                    food: "null"
+                    air: "null"
   /players:
     get:
       description: ""
@@ -99,48 +127,93 @@ paths:
           content:
             '*/*':
               schema:
-                $ref: "#/components/schemas/PlayersEndpointResponse"
+                $ref: "#/components/schemas/Players"
+  /server:
+    get:
+      description: ""
 components:
   schemas:
+    Map:
+      type: "object"
+      properties: {}
+    Map_String:
+      type: "string"
+    PlayerStatistic:
+      type: "object"
+      properties: {}
     PlayerHealth:
       type: "object"
       properties:
-        health:
+        current:
+          type: "number"
+          format: "float"
+        max:
+          type: "number"
+          format: "float"
+    PlayerAbsorption:
+      type: "object"
+      properties:
+        current:
+          type: "number"
+          format: "float"
+        max:
+          type: "number"
+          format: "float"
+    PlayerArmor:
+      type: "object"
+      properties:
+        value:
+          type: "integer"
+          format: "int32"
+        percentage:
+          type: "number"
+          format: "float"
+        max:
+          type: "number"
+          format: "float"
+        absorption:
+          type: "number"
+          format: "float"
+    PlayerFood:
+      type: "object"
+      properties:
+        exhaustion:
           type: "number"
           format: "float"
         saturation:
           type: "number"
           format: "float"
-        hunger:
+        level:
           type: "integer"
           format: "int32"
-        exhaustion:
-          type: "number"
-          format: "float"
-        airSupply:
-          type: "integer"
-          format: "int32"
-        armor:
-          type: "integer"
-          format: "int32"
-        armorPercentage:
-          type: "number"
-          format: "float"
-        maxHealth:
-          type: "number"
-          format: "float"
-        maxAirSupply:
-          type: "integer"
-          format: "int32"
-        maxArmor:
-          type: "number"
-          format: "float"
-        maxAbsorption:
-          type: "number"
-          format: "float"
-    PlayerStatistic:
+    PlayerAir:
       type: "object"
-      properties: {}
+      properties:
+        current:
+          type: "integer"
+          format: "int32"
+        max:
+          type: "integer"
+          format: "int32"
+    PlayerStatus:
+      type: "object"
+      properties:
+        health:
+          $ref: "#/components/schemas/PlayerHealth"
+        absorption:
+          $ref: "#/components/schemas/PlayerAbsorption"
+        armor:
+          $ref: "#/components/schemas/PlayerArmor"
+        food:
+          $ref: "#/components/schemas/PlayerFood"
+        air:
+          $ref: "#/components/schemas/PlayerAir"
+      required:
+      - "health"
+      - "absorption"
+      - "armor"
+      - "food"
+      - "air"
     PlayerInfo:
       type: "object"
       properties:
@@ -152,7 +225,7 @@ components:
       required:
       - "uuid"
       - "name"
-    PlayersEndpointResponse:
+    Players:
       type: "object"
       properties:
         count:

@@ -1,2 +1,2 @@
-# Fabric Nautical Template
-Team Nautical's take on the Fabric Example Mod but Kotlin
+# Exposer
+A web server mod that exposes basic player and server stats

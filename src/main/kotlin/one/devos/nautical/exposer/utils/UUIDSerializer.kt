@@ -1,4 +1,4 @@
-package one.devos.nautical.exposeplayers.utils
+package one.devos.nautical.exposer.utils
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind

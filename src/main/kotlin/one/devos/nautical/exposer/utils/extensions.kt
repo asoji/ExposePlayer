@@ -1,10 +1,10 @@
-package one.devos.nautical.exposeplayers.utils
+package one.devos.nautical.exposer.utils
 
 import net.minecraft.FileUtil
 import net.minecraft.server.players.PlayerList
 import net.minecraft.stats.ServerStatsCounter
 import net.minecraft.world.level.storage.LevelResource
-import one.devos.nautical.exposeplayers.mixin.PlayerListMixin
+import one.devos.nautical.exposer.mixin.PlayerListMixin
 import java.io.File
 import java.util.UUID
 

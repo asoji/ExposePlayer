@@ -1,4 +1,4 @@
-package one.devos.nautical.exposeplayers
+package one.devos.nautical.exposer
 
 import gay.asoji.fmw.FMW
 import io.ktor.server.application.*
@@ -7,13 +7,13 @@ import io.ktor.server.netty.*
 import io.ktor.server.routing.*
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
-import one.devos.nautical.exposeplayers.plugins.configureRouting
-import one.devos.nautical.exposeplayers.plugins.configureSerialization
+import one.devos.nautical.exposer.plugins.configureRouting
+import one.devos.nautical.exposer.plugins.configureSerialization
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-object ExposePlayers : ModInitializer {
-    val MOD_ID: String = "exposeplayers"
+object Exposer : ModInitializer {
+    val MOD_ID: String = "exposer"
     val LOGGER: Logger = LoggerFactory.getLogger(MOD_ID)
     val MOD_NAME: String = FMW.getName(MOD_ID)
 

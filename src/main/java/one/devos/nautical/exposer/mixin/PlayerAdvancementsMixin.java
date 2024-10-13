@@ -1,4 +1,4 @@
-package one.devos.nautical.exposeplayers.mixin;
+package one.devos.nautical.exposer.mixin;
 
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.advancements.AdvancementProgress;

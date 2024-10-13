@@ -28,7 +28,7 @@ group = project.property("maven_group")!!
 */
 
 val fatJar = tasks.register<ShadowJar>("fatJar") {
-	group = "exposeplayers"
+	group = "exposer"
 	description = "Builds a fat JAR with all dependencies shaded in"
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 	configurations = listOf(shade)
