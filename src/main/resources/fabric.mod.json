@@ -24,7 +24,7 @@
 		"main": [
 			{
 				"adapter": "kotlin",
-				"value": "Exposer"
+				"value": "one.devos.nautical.exposer.Exposer"
 			}
 		]
 	},
