@@ -4,6 +4,7 @@ import gay.asoji.fmw.FMW
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.netty.*
+import io.ktor.server.plugins.compression.*
 import io.ktor.server.routing.*
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
@@ -26,6 +27,7 @@ object Exposer : ModInitializer {
             this.server?.stop()
             this.server = embeddedServer(Netty, port = 64589, host = "0.0.0.0", module = {
                 install(IgnoreTrailingSlash)
+                install(Compression)
 
                 configureRouting(server)
                 configureSerialization()

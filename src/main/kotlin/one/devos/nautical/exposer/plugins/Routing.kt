@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.network.chat.Component
 import net.minecraft.server.MinecraftServer
+import net.minecraft.server.dedicated.DedicatedServer
 import net.minecraft.stats.StatType
 import net.minecraft.stats.Stats
 import net.minecraft.world.item.Item
@@ -36,14 +37,31 @@ fun Application.configureRouting(server: MinecraftServer) {
         }
 
         get("/server") {
+            val dedicatedServer = server as? DedicatedServer
 
+            call.respond(ServerStats(
+                server.isDedicatedServer,
+                server.acceptsTransfers(),
+                server.isFlightAllowed,
+                dedicatedServer?.properties?.allowNether ?: true,
+                dedicatedServer?.properties?.bugReportLink ?: "",
+                server.isCommandBlockEnabled,
+                server.worldData.difficulty.name,
+                server.playerList.players.map { player ->
+                    PlayerInfo(player.uuid, player.name.string, player.connection.latency())
+                },
+                server.playerCount,
+                server.maxPlayers,
+                server.motd,
+                server.isPvpAllowed
+            ))
         }
 
         get("/players") {
             call.respond(Players(
                 server.playerCount,
                 server.playerList.players.map { player ->
-                    PlayerInfo(player.uuid, player.name.string)
+                    PlayerInfo(player.uuid, player.name.string, player.connection.latency())
                 }
             ))
         }
@@ -208,7 +226,8 @@ private data class Players(
 @Serializable
 private data class PlayerInfo(
     @Serializable(with = UUIDSerializer::class) val uuid: UUID,
-    val name: String
+    val name: String,
+    val ping: Int
 )
 
 @Serializable
@@ -286,3 +305,19 @@ private enum class ItemStatisticType(private val value: StatType<*>) {
         }
     }
 }
+
+@Serializable
+private class ServerStats(
+    val dedicatedServer: Boolean,
+    val acceptsTransfers: Boolean,
+    val allowFlight: Boolean,
+    val allowNether: Boolean,
+    val serverBugReportLink: String,
+    val commandBlockEnabled: Boolean,
+    val difficulty: String,
+    val players: List<@Contextual PlayerInfo>,
+    val playerCount: Int,
+    val maxPlayerCount: Int,
+    val motd: String,
+    val pvpEnabled: Boolean
+)
