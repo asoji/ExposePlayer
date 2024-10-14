@@ -3,6 +3,8 @@ package one.devos.nautical.exposer.utils
 import net.minecraft.FileUtil
 import net.minecraft.server.players.PlayerList
 import net.minecraft.stats.ServerStatsCounter
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.item.enchantment.Enchantment
 import net.minecraft.world.level.storage.LevelResource
 import one.devos.nautical.exposer.mixin.PlayerListMixin
 import java.io.File
@@ -29,4 +31,10 @@ fun PlayerList.getPlayerStatsByUuid(uuid: UUID, name: String): ServerStatsCounte
     }
 
     return statsCounter!!
+}
+
+fun ItemStack.getEnchantmentsWithLevels(): Map<Enchantment, Int> {
+    return enchantments.entrySet().associate { (key, value) ->
+        key.value() to value
+    }
 }

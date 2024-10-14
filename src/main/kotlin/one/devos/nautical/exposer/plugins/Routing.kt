@@ -7,6 +7,7 @@ import io.ktor.server.routing.*
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
 import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.core.registries.Registries
 import net.minecraft.network.chat.Component
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.dedicated.DedicatedServer
@@ -15,8 +16,9 @@ import net.minecraft.stats.Stats
 import net.minecraft.world.item.Item
 import one.devos.nautical.exposer.mixin.PlayerAdvancementsMixin
 import one.devos.nautical.exposer.utils.UUIDSerializer
+import one.devos.nautical.exposer.utils.getEnchantmentsWithLevels
 import one.devos.nautical.exposer.utils.getPlayerStatsByUuid
-import java.util.UUID
+import java.util.*
 
 private val ITEM_STATS = listOf(
     Stats.ITEM_USED,
@@ -39,29 +41,32 @@ fun Application.configureRouting(server: MinecraftServer) {
         get("/server") {
             val dedicatedServer = server as? DedicatedServer
 
-            call.respond(ServerStats(
-                server.isDedicatedServer,
-                server.acceptsTransfers(),
-                server.isFlightAllowed,
-                dedicatedServer?.properties?.allowNether ?: true,
-                dedicatedServer?.properties?.bugReportLink ?: "",
-                server.isCommandBlockEnabled,
-                server.worldData.difficulty.name,
-                server.playerList.players.map { player ->
-                    PlayerInfo(player.uuid, player.name.string, player.connection.latency())
-                },
-                server.playerCount,
-                server.maxPlayers,
-                server.motd,
-                server.isPvpAllowed
-            ))
+            call.respond(
+                ServerStats(
+                    server.isDedicatedServer,
+                    server.acceptsTransfers(),
+                    server.isFlightAllowed,
+                    dedicatedServer?.properties?.allowNether ?: true,
+                    dedicatedServer?.properties?.bugReportLink ?: "",
+                    server.isCommandBlockEnabled,
+                    server.worldData.difficulty.name,
+                    server.playerList.players.map { player ->
+                        PlayerInfoWithPing(player.uuid, player.name.string, player.connection.latency())
+                    },
+                    server.playerCount,
+                    server.maxPlayers,
+                    server.motd,
+                    server.isPvpAllowed,
+                    (server.overworld().dayTime() % 24000).toInt()
+                )
+            )
         }
 
         get("/players") {
             call.respond(Players(
                 server.playerCount,
                 server.playerList.players.map { player ->
-                    PlayerInfo(player.uuid, player.name.string, player.connection.latency())
+                    PlayerInfoWithPing(player.uuid, player.name.string, player.connection.latency())
                 }
             ))
         }
@@ -85,31 +90,33 @@ fun Application.configureRouting(server: MinecraftServer) {
                 return@get
             }
 
-            call.respond(PlayerStatus(
-                PlayerHealth(
-                    player.health,
-                    player.maxHealth
-                ),
-                PlayerAbsorption(
-                    player.absorptionAmount,
-                    player.maxAbsorption
-                ),
-                PlayerArmor(
-                    player.armorValue,
-                    player.armorCoverPercentage,
-                    20f, // assuming max armor value is 20 temporarily - Other mods may modify the max value, thus meaning that we need to find a way to obtain their new max value.
-                    player.absorptionAmount
-                ),
-                PlayerFood(
-                    player.foodData.exhaustionLevel,
-                    player.foodData.saturationLevel,
-                    player.foodData.foodLevel
-                ),
-                PlayerAir(
-                    player.airSupply,
-                    player.maxAirSupply
+            call.respond(
+                PlayerStatus(
+                    PlayerHealth(
+                        player.health,
+                        player.maxHealth
+                    ),
+                    PlayerAbsorption(
+                        player.absorptionAmount,
+                        player.maxAbsorption
+                    ),
+                    PlayerArmor(
+                        player.armorValue,
+                        player.armorCoverPercentage,
+                        20f, // assuming max armor value is 20 temporarily - Other mods may modify the max value, thus meaning that we need to find a way to obtain their new max value.
+                        player.absorptionAmount
+                    ),
+                    PlayerFood(
+                        player.foodData.exhaustionLevel,
+                        player.foodData.saturationLevel,
+                        player.foodData.foodLevel
+                    ),
+                    PlayerAir(
+                        player.airSupply,
+                        player.maxAirSupply
+                    )
                 )
-            ))
+            )
         }
 
         get("/player/{player_name}/stats") {
@@ -131,10 +138,12 @@ fun Application.configureRouting(server: MinecraftServer) {
             val statsCounter = server.playerList.getPlayerStatsByUuid(playerUuid, playerName)
 
             for (resourceLocation in Stats.CUSTOM) {
-                statList.add(PlayerCustomStatistic(
-                    Component.translatable(resourceLocation.value.toLanguageKey("stat")).string,
-                    statsCounter.getValue(resourceLocation)
-                ))
+                statList.add(
+                    PlayerCustomStatistic(
+                        Component.translatable(resourceLocation.value.toLanguageKey("stat")).string,
+                        statsCounter.getValue(resourceLocation)
+                    )
+                )
             }
 
             for (item in BuiltInRegistries.ITEM) {
@@ -214,20 +223,107 @@ fun Application.configureRouting(server: MinecraftServer) {
 
             call.respond(completedAdvancements.toMap())
         }
+
+        get("/player/{player_name}/inventory") {
+            val playerName = call.parameters["player_name"]
+            if (playerName == null) {
+                call.respond(HttpStatusCode.BadRequest)
+                return@get
+            }
+
+            val playerUuid = server.profileCache?.get(playerName)?.get()?.id
+            if (playerUuid == null) {
+                call.respond(HttpStatusCode.BadRequest)
+                return@get
+            }
+
+            val player = server.playerList.getPlayer(playerUuid)
+            if (player == null) {
+                call.respond(HttpStatusCode.NotFound)
+                return@get
+            }
+
+            call.respond(PlayerInventory(
+                player.inventory.items.map {
+                    PlayerItem(it.displayName.string, it.item.toString(), it.count, it.damageValue, it.maxDamage, it.maxDamage - it.damageValue, it.getEnchantmentsWithLevels().mapNotNull { (enchantment, level) ->
+                        Enchantment(
+                            server.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getKey(enchantment)?.toString() ?: return@mapNotNull null,
+                            enchantment.description.string,
+                            level
+                        )
+                    })
+                },
+                player.inventory.armor.map {
+                    PlayerItem(it.displayName.string, it.item.toString(), it.count, it.damageValue, it.maxDamage, it.maxDamage - it.damageValue, it.getEnchantmentsWithLevels().mapNotNull { (enchantment, level) ->
+                        Enchantment(
+                            server.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getKey(enchantment)?.toString() ?: return@mapNotNull null,
+                            enchantment.description.string,
+                            level
+                        )
+                    })
+                },
+                player.inventory.offhand.map {
+                    PlayerItem(it.displayName.string, it.item.toString(), it.count, it.damageValue, it.maxDamage, it.maxDamage - it.damageValue, it.getEnchantmentsWithLevels().mapNotNull { (enchantment, level) ->
+                        Enchantment(
+                            server.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getKey(enchantment)?.toString() ?: return@mapNotNull null,
+                            enchantment.description.string,
+                            level
+                        )
+                    })
+                }
+            ))
+        }
+
+        get("/player/{player_name}/position") {
+            val playerName = call.parameters["player_name"]
+            if (playerName == null) {
+                call.respond(HttpStatusCode.BadRequest)
+                return@get
+            }
+
+            val playerUuid = server.profileCache?.get(playerName)?.get()?.id
+            if (playerUuid == null) {
+                call.respond(HttpStatusCode.BadRequest)
+                return@get
+            }
+
+            val player = server.playerList.getPlayer(playerUuid)
+            if (player == null) {
+                call.respond(HttpStatusCode.NotFound)
+                return@get
+            }
+
+            call.respond(PlayerPosition(
+                player.level().dimension().location().toString(),
+                player.level().getBiome(player.blockPosition()).unwrapKey().orElseThrow().location().toString(),
+                PlayerCoordinates(
+                    player.x,
+                    player.y,
+                    player.z
+                ),
+                player.direction.serializedName
+            ))
+        }
     }
 }
 
 @Serializable
 private data class Players(
     val count: Int,
-    val players: List<@Contextual PlayerInfo>
+    val players: List<@Contextual PlayerInfoWithPing>
+)
+
+@Serializable
+private data class PlayerInfoWithPing(
+    @Serializable(with = UUIDSerializer::class) val uuid: UUID,
+    val name: String,
+    val ping: Int
 )
 
 @Serializable
 private data class PlayerInfo(
     @Serializable(with = UUIDSerializer::class) val uuid: UUID,
-    val name: String,
-    val ping: Int
+    val name: String
 )
 
 @Serializable
@@ -269,13 +365,14 @@ private data class PlayerStatus( // todo: vehicle data
     val absorption: PlayerAbsorption,
     val armor: PlayerArmor,
     val food: PlayerFood,
-    val air: PlayerAir,
+    val air: PlayerAir
 )
 
 @Serializable
 private sealed interface PlayerStatistic<T> {
     val displayName: String
-    @Contextual val value: T
+    @Contextual
+    val value: T
 }
 
 @Serializable
@@ -307,7 +404,7 @@ private enum class ItemStatisticType(private val value: StatType<*>) {
 }
 
 @Serializable
-private class ServerStats(
+private data class ServerStats(
     val dedicatedServer: Boolean,
     val acceptsTransfers: Boolean,
     val allowFlight: Boolean,
@@ -315,9 +412,50 @@ private class ServerStats(
     val serverBugReportLink: String,
     val commandBlockEnabled: Boolean,
     val difficulty: String,
-    val players: List<@Contextual PlayerInfo>,
+    val players: List<@Contextual PlayerInfoWithPing>,
     val playerCount: Int,
     val maxPlayerCount: Int,
     val motd: String,
-    val pvpEnabled: Boolean
+    val pvpEnabled: Boolean,
+    val timeOfDay: Int
+)
+
+@Serializable
+private data class PlayerInventory(
+    val items: List<PlayerItem>,
+    val armorItems: List<PlayerItem>,
+    val offhandItem: List<PlayerItem>
+)
+
+@Serializable
+private data class PlayerItem(
+    val displayName: String,
+    val item: String,
+    val itemCount: Int,
+    val durabilityDamage: Int,
+    val maxDurability: Int,
+    val remainingDurability: Int,
+    val enchantments: List<Enchantment>
+)
+
+@Serializable
+private data class Enchantment(
+    val id: String,
+    val displayName: String,
+    val level: Int
+)
+
+@Serializable
+private data class PlayerPosition(
+    val dimension: String,
+    val biome: String,
+    val coordinates: PlayerCoordinates,
+    val facing: String
+)
+
+@Serializable
+private data class PlayerCoordinates(
+    val x: Double,
+    val y: Double,
+    val z: Double
 )
